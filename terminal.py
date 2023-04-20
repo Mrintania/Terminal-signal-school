@@ -17,7 +17,6 @@ if not com_list:
     # แสดง message box เมื่อไม่พบ COM Port เชื่อมต่ออยู่
     messagebox.showwarning("Warning", "No COM Ports found!")
 
-
 # สร้าง Dropdown สำหรับเลือก COM Port
 com_label = ttk.Label(root, text="Select COM Port:")
 com_label.pack(pady=10)
@@ -34,7 +33,7 @@ status_label.pack(side="bottom", pady=5)
 
 # # สร้างฟังก์ชันเชื่อมต่อ Serial port
 # def connect():
-#     # ตัวอย่างการเชื่อมต่อ
+#     #ตัวอย่างการเชื่อมต่อ
 #     global ser
 #     ser = serial.Serial(com_var.get())
 #     print("Connected")
@@ -59,8 +58,6 @@ status_label.pack(side="bottom", pady=5)
 # # สร้างสถานะในส่วนของ status menu
 # status_label = ttk.Label(root, text="Disconnected", foreground="red", justify="center")
 # status_label.pack(side="bottom", fill="x")
-
-
 
 # สร้าง Radio button สำหรับเลือก Baud rate
 baud_frame = ttk.LabelFrame(root, text="Baud rate")
@@ -92,7 +89,7 @@ databit_rb_6.pack(side="left", padx=5)
 databit_rb_5 = ttk.Radiobutton(databit_frame, text="5 bits", variable=databit_var, value="5")
 databit_rb_5.pack(side="left", padx=5)
 
-databit_var.set("5") # ตั้งค่าให้เลือก Data bit 8 เป็นค่า default
+databit_var.set("8") # ตั้งค่าให้เลือก Data bit 8 เป็นค่า default
 
 
 # สร้าง Stop Bit สำหรับเลือก Stop bit
@@ -101,7 +98,6 @@ stopbit_frame.pack(pady=10)
 
 stopbit_frame_inner = ttk.Frame(stopbit_frame)
 stopbit_frame_inner.pack()
-
 stopbit_var = tk.StringVar()
 stopbit_1_radio = ttk.Radiobutton(stopbit_frame_inner, text="1", variable=stopbit_var, value="1")
 stopbit_1_radio.pack(side="left", padx=5)
@@ -133,6 +129,28 @@ parity_space_radio.pack(side="left", padx=5)
 
 parity_var.set("None") # ตั้งค่าให้เลือก Parity None เป็นค่า default
 
+# สร้าง Handsake สำหรับเลือก Handsake
+
+
+
+# handshake_frame = ttk.LabelFrame(root, text="Handshake")
+# handshake_frame.pack(pady=10)
+
+# handshake_frame_inner = ttk.Frame(handshake_frame)
+# handshake_frame_inner.pack()
+
+# handshake_var = tk.StringVar()
+# handshake_none_radio = ttk.Radiobutton(handshake_frame_inner, text="None", variable=handshake_var, value="None")
+# handshake_none_radio.pack(side="left", padx=5)
+# handshake_xonxoff_radio = ttk.Radiobutton(handshake_frame_inner, text="Xon/Xoff", variable=handshake_var, value="Xon/Xoff")
+# handshake_xonxoff_radio.pack(side="left", padx=5)
+# handshake_rtscts_radio = ttk.Radiobutton(handshake_frame_inner, text="RTS/CTS", variable=handshake_var, value="RTS/CTS")
+# handshake_rtscts_radio.pack(side="left", padx=5)
+# handshake_dsrdtr_radio = ttk.Radiobutton(handshake_frame_inner, text="DSR/DTR", variable=handshake_var, value="DSR/DTR")
+# handshake_dsrdtr_radio.pack(side="left", padx=5)
+# # Set Handsake to None as default
+# handshake_var.set("None")
+
 # สร้าง Entry สำหรับป้อนข้อความ
 input_label = ttk.Label(root, text="Enter message:")
 input_label.pack(pady=10)
@@ -141,6 +159,7 @@ input_var = tk.StringVar()
 input_entry = ttk.Entry(root, textvariable=input_var)
 input_entry.pack(pady=5)
 
+message_entry = ttk.Entry(root, width=50)
 
 # สร้าง Button สำหรับส่งข้อความผ่าน Serial port
 def send_message():
@@ -150,8 +169,10 @@ def send_message():
         baudrate = int(baud_var.get())
         parity = parity_var.get()
         message = input_var.get()
-        ser = serial.Serial('COM1', baudrate, bytesize=databit, stopbits=stopbit, parity=parity)
-        message = message_entry.get().encode('utf-8')
+        ser = serial.Serial('COM1', baudrate, bytesize=databit, stopbits=stopbit, parity=parity, timeout=1000)
+        ser.dsrdtr = True
+        ser.rtscts = False
+        message = message_entry.get().encode('ASCII')
         ser.write(message)
         ser.close()
 
@@ -162,30 +183,6 @@ def send_message():
 
 send_button = ttk.Button(root, text="Send", command=send_message)
 send_button.pack(pady=10)
-
-
-
-# สร้างปุ่ม Request สำหรับส่งข้อความผ่าน Serial port ที่ pin7 แบบ Toggle
-def toggle_pin():
-    if com.isOpen():
-        if btn_toggle['text'] == 'Request Pin7 ON':
-            com.write(b'Pin7_ON')
-            print('Pin7_ON')
-            btn_toggle['text'] = 'Request Pin7 OFF'
-        else:
-            com.write(b'Pin7_OFF')
-            print('Pin7_OFF')
-            btn_toggle['text'] = 'Request Pin7 ON'
-    else:
-        print('Serial port is not open.')
-
-btn_toggle = ttk.Button(root, text="Request Pin7 ON", command=toggle_pin)
-btn_toggle.pack(pady=10)
-
-
-
-
-
 
 # สร้าง Footer
 footer_frame = ttk.Frame(root)
@@ -199,8 +196,12 @@ copyright_label = ttk.Label(
 )
 copyright_label.pack()
 
-
 root.mainloop()
+
+
+# ทำฟังก์ชันสำหรับปิด Serial port ให้เมื่อปิดโปรแกรม
+# มี Handshaking ด้วย
+# โดย RTS จะถูกตั้งค่าเป็น 0 และ DTR จะถูกตั้งค่าเป็น 1 เมื่อกดส่ง โปแกรมจะสั่งให้ pin7 ทำงานโดยส่งเป็น 1 และ pin8 ทำงานโดยส่งเป็น 0
 
 
 
